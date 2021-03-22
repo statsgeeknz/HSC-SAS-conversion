@@ -1,0 +1,105 @@
+iref,Question,Topic,Question_text,QuestionType,Positive,Neutral,Negative,Exclude,Weight
+101,Q01,GP Practice,When did you last contact the GP practice named on the enclosed letter?,Information,,,,,T5_Wt_Final
+102,Q02,GP Practice,"Roughly, how often have you contacted this GP practice in the last 12 months?",Information,,,,,T1_Wt_Final
+103,Q03,GP Practice,How easy is it for you to contact your GP practice in the way that you want?,Percent positive,"1, 2",,3,,T1_Wt_Final
+104,Q04,GP Practice,What do you think about the opening hours of your GP practice?,Information,,,,,T1_Wt_Final
+105,Q05,GP Practice,"If you ask to make an appointment with a doctor 3 or more working days in advance, does your GP practice allow you to?",Percent positive,1,,2,3,T1_Wt_Final
+106,Q06,GP Practice,"The last time you needed to see or speak to a doctor or nurse from your GP practice quite urgently, how long did you wait?",Percent positive,"1, 2",,3,4,T1_Wt_Final
+107,Q07,GP Practice,What was the main reason you waited longer than 2 working days?,Information,,,,,T1_Wt_Final
+108,Q08,GP Practice,"The last time you needed an appointment with your GP practice, what kind of appointment did you get?",Information,,,,,T1_Wt_Final
+109,Q09a,GP Practice,The quality of information provided by the receptionist?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+110,Q09b,GP Practice,The arrangements for getting to see a doctor?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+111,Q09c,GP Practice,The arrangements for getting to see a nurse?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+112,Q09d,GP Practice,The arrangements for getting to see a Pharmacist / Chemist?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+113,Q09e,GP Practice,The arrangements for getting to see a Physiotherapist?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+114,Q09f,GP Practice,The arrangements for getting to see a Mental Health Professional?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+115,Q09g,GP Practice,The arrangements for getting to see a Community Link Worker?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+116,Q09h,GP Practice,The arrangements for getting to see a Another Healthcare Professional?,Percent positive,"1, 2",3,"4, 5",6,T1_Wt_Final
+117,Q10,GP Practice,"Overall, how would you rate the care provided by your GP practice?",Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+118,Q11a,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - An injury or accident",Information,,,,,T1_Wt_Final
+119,Q11b,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - Another physical health",Information,,,,,T1_Wt_Final
+120,Q11c,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - A mental health problem",Information,,,,,T1_Wt_Final
+121,Q11d,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - A routine appointment",Information,,,,,T1_Wt_Final
+122,Q11e,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - Something else",Information,,,,,T1_Wt_Final
+123,Q11f,GP Practice,"The last time you received treatment or advice at your GP practice in the last 12 months, what did you receive treatment or advice for? - No treatment / advice r",Information,,,,,T1_Wt_Final
+124,Q12,GP Practice,What type of healthcare professional did you receive most of your treatment or advice from? Please tick one box only.,Information,,,,,T1_Wt_Final
+125,Q13a,GP Practice,The person I saw was appropriate for my treatment / care,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+126,Q13b,GP Practice,I was listened to.,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+127,Q13c,GP Practice,I was given enough time,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+128,Q13d,GP Practice,I was treated with compassion and understanding.,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+129,Q13e,GP Practice,I was given the opportunity to involve the people that matter to me.,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+130,Q13f,GP Practice,I understood the information I was given,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+131,Q13g,GP Practice,I was able to ask questions if I wanted to,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+132,Q13h,GP Practice,I was involved in decisions about my care and treatment?,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+133,Q13i,GP Practice,Staff helped me to feel in control of my treatment/care,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+134,Q13j,GP Practice,I knew the healthcare professional well,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+135,Q13k,GP Practice,My treatment/care was well coordinated,Percent positive,"1, 2",3,"4, 5",,T1_Wt_Final
+136,Q14a,GP Practice,The symptoms you were experiencing?,Information,,,,,T1_Wt_Final
+137,Q14b,GP Practice,Your overall wellbeing?,Information,,,,,T1_Wt_Final
+138,Q16,OOH,"In the past 12 months, have you contacted an NHS service when you wanted to see a GP, but your GP practice was closed?",Information,,,,,T5_Wt_Final
+139,Q17,OOH,For this section you should think about the last time you tried to get treatment in the last 12 months when your GP practice was closed. Which service did you re,Information,,,,,T2_Wt_Final
+140,Q18a,OOH,How did you end up in the service you ticked above? - Phoned NHS 24 (111),Information,,,,,T2_Wt_Final
+141,Q18b,OOH,How did you end up in the service you ticked above? - Used NHS Inform,Information,,,,,T2_Wt_Final
+142,Q18c,OOH,How did you end up in the service you ticked above? - Advised by family or friend,Information,,,,,T2_Wt_Final
+143,Q18d,OOH,How did you end up in the service you ticked above? - Advised by other service,Information,,,,,T2_Wt_Final
+144,Q19,OOH,What did you receive treatment or advice from this service for?,Information,,,,,T2_Wt_Final
+145,Q20a,OOH,I was listened to,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+146,Q20b,OOH,I was given enough time,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+147,Q20c,OOH,I was treated with compassion and understanding.,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+148,Q20d,OOH,I was given the opportunity to involve the people that matter to me.,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+149,Q20e,OOH,I understood the information I was given,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+150,Q20f,OOH,I was able to ask questions if I wanted to,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+151,Q20g,OOH,Staff helped me to feel in control of my treatment/care,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+152,Q20h,OOH,My treatment/care was well coordinated,Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+153,Q21,OOH,"Overall, how would you rate the care you experienced from this service?",Percent positive,"1, 2",3,"4, 5",,T2_Wt_Final
+154,Q23a,Social Care,"In the last 12 months have you had any help or support with everyday living? - Yes, help for me with personal and / or household tasks",Information,,,,,T5_Wt_Final
+155,Q23b,Social Care,"In the last 12 months have you had any help or support with everyday living? - Yes, help for me for activities outside my home",Information,,,,,T5_Wt_Final
+156,Q23c,Social Care,"In the last 12 months have you had any help or support with everyday living? - Yes, help for me with adaptions and / or equipment for my home",Information,,,,,T5_Wt_Final
+157,Q23d,Social Care,"In the last 12 months have you had any help or support with everyday living? - Yes, help to look after someone else",Information,,,,,T5_Wt_Final
+158,Q23e,Social Care,"In the last 12 months have you had any help or support with everyday living? - No, not had any help but I feel that I needed it",Information,,,,,T5_Wt_Final
+159,Q23f,Social Care,"In the last 12 months have you had any help or support with everyday living? - No, not had any help",Information,,,,,T5_Wt_Final
+160,Q24a,Social Care,Who funds your help or support with everyday living? - Council,Information,,,,,T3_Wt_Final
+161,Q24b,Social Care,Who funds your help or support with everyday living? - Me / family,Information,,,,,T3_Wt_Final
+162,Q24c,Social Care,Who funds your help or support with everyday living? - NHS,Information,,,,,T3_Wt_Final
+163,Q24d,Social Care,Who funds your help or support with everyday living? - Other,Information,,,,,T3_Wt_Final
+164,Q24e,Social Care,Who funds your help or support with everyday living? - It is unpaid care from friends / family,Information,,,,,T3_Wt_Final
+165,Q25,Social Care,Which of the following applies to you and how your social care is arranged?,Information,,,,,T3_Wt_Final
+166,Q26a,Social Care,"I was aware of the help, care and support options available to me",Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+167,Q26b,Social Care,"I had a say in how my help, care or support was provided",Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+168,Q26c,Social Care,People took account of the things that matter to me,Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+169,Q26d,Social Care,I was treated with compassion and understanding,Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+170,Q26e,Social Care,I felt safe,Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+171,Q26f,Social Care,I was supported to live as independently as possible,Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+172,Q26g,Social Care,"My health, support and care services seemed to be well coordinated",Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+173,Q26h,Social Care,"The help, care or support improved or maintained my quality of life",Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+174,Q27,Social Care,"Overall, how would you rate your help, care or support services? Please exclude the care and help you get from friends and family.",Percent positive,"1, 2",3,"4, 5",,T3_Wt_Final
+175,Q29,Carers,"Do you look after, or give any regular help or support, to family members, friends, neighbours or others because of either long-term physical / mental health / d",Information,,,,,T5_Wt_Final
+176,Q30a,Carers,Who do you care for? - Partner or spouse,Information,,,,,T4_Wt_Final
+177,Q30b,Carers,Who do you care for? - A parent,Information,,,,,T4_Wt_Final
+178,Q30c,Carers,Who do you care for? - A child,Information,,,,,T4_Wt_Final
+179,Q30d,Carers,Who do you care for? - Another relative,Information,,,,,T4_Wt_Final
+180,Q30e,Carers,Who do you care for? - A friend or neighbour,Information,,,,,T4_Wt_Final
+181,Q30f,Carers,Who do you care for? - Someone else,Information,,,,,T4_Wt_Final
+182,Q31,Carers,"Have you had a carers assessment, now known as a Adult Carers Support Plan or Young Carers Statement (for carers under 18)? This captures information on your car",Information,,,,,T4_Wt_Final
+183,Q32a,Carers,I have a good balance between caring and other things in my life,Percent positive,"1, 2",3,"4, 5",,T4_Wt_Final
+184,Q32b,Carers,Caring has had a negative impact on my health and wellbeing,Percent positive,"4, 5",3,"1, 2",,T4_Wt_Final
+185,Q32c,Carers,I have a say in services provided for the person(s) I look after,Percent positive,"1, 2",3,"4, 5",,T4_Wt_Final
+186,Q32d,Carers,Local services are well coordinated for the person(s) I look after,Percent positive,"1, 2",3,"4, 5",,T4_Wt_Final
+187,Q32e,Carers,I feel supported to continue caring,Percent positive,"1, 2",3,"4, 5",,T4_Wt_Final
+188,Q33,About You,How is your health in general?,Information,,,,,No_Weight
+189,Q34,About You,"In general, how well do you feel that you are able to look after your own health?",Percent positive,"1, 2",,"3, 4",,No_Weight
+190,Q35,About You,How would you rate your quality of life as a whole?,Information,,,,,No_Weight
+191,Q36a,About You,Do you have any of the following? - Deafness or severe hearing impairment,Information,,,,,No_Weight
+192,Q36b,About You,Do you have any of the following? - Blindness or severe vision impairment,Information,,,,,No_Weight
+193,Q36c,About You,Do you have any of the following? - Chronic paid lasting at least 3 months,Information,,,,,No_Weight
+194,Q36d,About You,Do you have any of the following? - A physical disability,Information,,,,,No_Weight
+195,Q36e,About You,Do you have any of the following? - A learning disability,Information,,,,,No_Weight
+196,Q36f,About You,Do you have any of the following? - A mental health condition,Information,,,,,No_Weight
+197,Q36g,About You,Do you have any of the following? - Another long-term condition,Information,,,,,No_Weight
+198,Q36h,About You,Do you have any of the following? - None of the above,Information,,,,,No_Weight
+199,Q37,About You,What best describes your gender?,Information,,,,,No_Weight
+200,Q38,About You,What best describes your ethnic group?,Information,,,,,No_Weight
+201,Q39,About You,Which of the following options best describes how you think of yourself?,Information,,,,,No_Weight
+202,Q40,About You,What best describes your work status?,Information,,,,,No_Weight
+203,Q41,About You,"What religion, religious denomination or body do you belong to?",Information,,,,,No_Weight
+205,LDP_48HR,Indicator,GPs to provide 48 Hour access to an appropriate member of the GP team for at least 90 per cent of patients,Percent positive,1,,2,,T1_Wt_Final
