@@ -45,7 +45,7 @@
 
 /*Select questions of interest by relevant iref (from 101 to 189):*/
 %LET first_question = 101; /*min=101 */
-%LET last_question = 203; /*max=203 */
+%LET last_question = 153; /*max=203 */
 %LET geography = NAT; /*could probably set this up to do this by different geographies, but just use NAT for now */
 
 
