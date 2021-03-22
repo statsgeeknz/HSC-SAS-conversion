@@ -41,7 +41,7 @@
   
   # equivalent of work.HACE&Year._QUESTIONS
   workingQuestions <- HACE1920_QUESTIONS %>% mutate(
-    geography = geography, weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste(Weight, geography)))
+    geography = geography, Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography)))
 
   
 
@@ -65,12 +65,12 @@
       Weight <- currentIref$Weight2
       
   
+   
+  
       
     } # end of i loop
-        
+    
   }
-  
-  
 
 
 #     
@@ -85,6 +85,21 @@
 #     2 = '% Not Positive';
 #     RUN;
 #     
+  
+  responses <- HACE1920_WEIGHTED %>% select(GP_PRAC_NO, n_eligible, as.name(Question), as.name(Weight)) %>%
+    filter(as.name(Question)  == 3) 
+  
+      mutate(Strata = gp_prac_no) %>%
+    filter(Weight != 0) %>%
+    
+    
+    if(Question in Positive){
+      
+    } elseif {
+      
+    }
+    
+  
 #     DATA Responses_&Question;
 #     SET PESURVEY.HACE&Year._WEIGHTED
 #     (KEEP= gp_prac_no n_eligible &Question. &Weight.);
@@ -94,7 +109,9 @@
 #     
 #     IF &Weight. = 0 THEN DELETE;
 #     
+      
 #     %IF &QuestionType = Indicator OR &QuestionType = Information %THEN %GOTO skip1;
+      
 #     
 #     IF &Question IN (&Positive) THEN DO;
 #     PercentPositive_&Question = 1;
@@ -116,6 +133,10 @@
 #     %skip1:
 #       RUN;
 #     
+      
+      
+      
+      
 #     %IF &QuestionType = Indicator OR &QuestionType = Information %THEN %GOTO skip2;
 #     
 #     TITLE "Results: &Question";
@@ -125,6 +146,8 @@
 #     ODS OUTPUT OneWay=OneWayTable_&Question;
 #     RUN;
 #     
+      
+      
 #     %IF &i = &Min_iref %THEN %DO;
 #     DATA OneWay;
 #     SET OneWayTable_&Question; FORMAT i 8. Question $8. WgtFreq 8.2;
@@ -136,11 +159,15 @@
 #     PosNeutNeg_&Question Table _SkipLine &Question;
 #     RUN;
 #     
+      
+      
 #     PROC DATASETS LIBRARY=WORK NOLIST;
 #     DELETE OneWayTable_&Question;
 #     QUIT;
 #     %END;
 #     
+      
+      
 #     %ELSE %IF &i ^= &Min_iref %THEN %DO;
 #     DATA OneWayTable_&Question;
 #     SET OneWayTable_&Question; FORMAT i 8. Question $8. WgtFreq 8.2;
@@ -151,16 +178,21 @@
 #     DROP F_&Question F_PercentPositive_&Question F_PosNeutNeg_&Question PercentPositive_&Question 
 #     PosNeutNeg_&Question Table _SkipLine &Question;
 #     RUN;
-#     
+#   
+      
+      
+      
 #     PROC APPEND BASE=OneWay DATA=OneWayTable_&Question; RUN;
 #     
 #     PROC DATASETS LIBRARY=WORK NOLIST;
 #     DELETE OneWayTable_&Question;
 #     QUIT;
 #     %END;
-#     
+#    
+      
 #     %skip2:
-#       
+
+      
 #       %IF &QuestionType = Indicator %THEN %DO;
 #     TITLE "Results: &Question";
 #     PROC SURVEYMEANS DATA=Responses_&Question Total=Strata_Pop;
