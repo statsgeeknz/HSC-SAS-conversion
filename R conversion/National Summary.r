@@ -24,6 +24,10 @@
   geography <- "NAT"
 
 
+
+# Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
+
+
   # HSC comment: "Set up strata populations"
   Strata_Pop <- HACE1920_STRATA_DATA %>% rename(total = n_eligible) %>% select(strata, total) %>% arrange(strata)
 
@@ -31,35 +35,44 @@
   # HSC comment: "Calculate the iref for the first percent positive question in the questions of interest:"
   PctPosQuest_Only <- HACE1920_QUESTIONS %>% filter(between(iref, first_question, last_question),
                                                     QuestionType == "Percent positive")
-      
-
-  First_PosPct_Quest <- PctPosQuest_Only %>% summarise(N = length(iref), MIN = min(iref), MAX = max(iref), MEAN = mean(iref), STD = sd(iref)) %>%
-    pivot_longer(names_to = "STAT", values_to = "iref", cols = N:STD)
   
-  Min_iref <- with(First_PosPct_Quest, iref[which(STAT=="MIN")])
+  # Create equiv of the SAS variable &Min_iref, which is long-winded use of symput after proc means
+  Min_iref <- min(PctPosQuest_Only$iref)
   
+  # equivalent of work.HACE&Year._QUESTIONS
   workingQuestions <- HACE1920_QUESTIONS %>% mutate(
     geography = geography, weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste(Weight, geography)))
 
   
-#     /*Macro to calculate results for questions of interest:*/
-#       %MACRO HACE1920_RESULTS;
-#     
-#     /*Loop through questions:*/
-#       %DO i=&first_question %TO &last_question;
-#     
-#     /*Define macro variables for each loop:*/
-#       DATA MACRO_SET_UP;
-#     SET work.HACE&Year._QUESTIONS;
-#     WHERE iref = &i;
-#     CALL SYMPUT ('Question', TRIM(LEFT(Question)));
-#     CALL SYMPUT ('QuestionType', TRIM(LEFT(QuestionType)));
-#     CALL SYMPUT ('Positive', TRIM(LEFT(Positive)));
-#     CALL SYMPUT ('Neutral', TRIM(LEFT(Neutral)));
-#     CALL SYMPUT ('Negative', TRIM(LEFT(Negative)));
-#     CALL SYMPUT ('Exclude', TRIM(LEFT(Exclude)));
-#     CALL SYMPUT ('Weight', TRIM(LEFT(Weight2)));
-#     RUN;
+
+# Macro conversion to function ------------------------------------------------------------------------------------------------------------------
+
+  # Macro has no arguments - start with similar structure
+  
+  HACE1920_RESULTS <- function(){
+  
+    # loop over questions
+    for(i in first_question:last_question){
+      
+      currentIref <- workingQuestions %>% filter(iref == i)
+      
+      Question <- currentIref$Question
+      QuestionType <- currentIref$QuestionType
+      Positive <- currentIref$Positive
+      Neutral <- currentIref$Neutral
+      Negative <- currentIref$Negative
+      Exclude <- currentIref$Exclude
+      Weight <- currentIref$Weight2
+      
+  
+      
+    } # end of i loop
+        
+  }
+  
+  
+
+
 #     
 #     PROC FORMAT;
 #     VALUE PosNeutNeg
