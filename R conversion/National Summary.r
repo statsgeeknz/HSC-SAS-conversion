@@ -11,7 +11,8 @@
 # Preamble --------------------------------------------------------------------------------------------------------------------------------------
 
   library(tidyverse)
-  
+  library(srvyr)
+
   #= read in example datasets - data management in reality TBD
   HACE1920_QUESTIONS <- read_csv("data/HACE1920_QUESTIONS.csv")
   HACE1920_STRATA_DATA <- read_csv("data/HACE1920_STRATA_DATA - Dummy data.csv")
@@ -47,148 +48,63 @@
 
 # Macro conversion to function ------------------------------------------------------------------------------------------------------------------
 
-  # Macro has no arguments - start with similar structure
+  # Three broad types of questions that get different treatment
   
-  HACE1920_RESULTS <- function(){
+  infoQuestions <- workingQuestions %>% filter(QuestionType == "Information") %>% split(., .$iref)
   
-    # loop over questions
-    for(i in first_question:last_question){
-      
-      currentIref <- workingQuestions %>% filter(iref == i)
-      
-      Question <- currentIref$Question
-      QuestionType <- currentIref$QuestionType
-      Positive <- currentIref$Positive
-      Neutral <- currentIref$Neutral
-      Negative <- currentIref$Negative
-      Exclude <- currentIref$Exclude
-      Weight <- currentIref$Weight2
-      
+  indicatorQuestions <- workingQuestions %>% filter(QuestionType == "Indicator") %>% split(., .$iref)
   
+  positiveQuestions <- workingQuestions %>% filter(QuestionType == "Percent positive") %>% split(., .$iref)
+  
+  
+# Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
+
+
+    currentQuestion <- positiveQuestions[[1]]
+  
+    
+  #= select & rename from weighted dataset, drop exclusions and zero weights
+    workingWeights <- HACE1920_WEIGHTED %>% 
+      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
+      mutate(Exclude = currentQuestion$Exclude, 
+             Positive = currentQuestion$Positive, 
+             Neutral = currentQuestion$Neutral,
+             Negative = currentQuestion$Negative) %>%
+      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
+      mutate(Question = as.character(Question)) %>%
+      filter(Question != 995, Question != 999, Weight != 0) %>%
+      filter(!(is.na(Exclude)==F & Exclude == Question))
+    
+  #= Code whether positive (1/2), or pos/neut/neg (1/2/3) depending on definition 
    
-  
-      
-    } # end of i loop
+    workingWeights <- workingWeights %>%
+      rowwise() %>%
+      mutate(
+            PercentPositive = ifelse(grepl(Question, Positive), '% Positive', '% Not Positive'),
+             PosNeutNeg = case_when(
+               grepl(Question, Positive) ~ '% Positive',
+               grepl(Question, Neutral) ~ '% Neutral',
+               grepl(Question, Negative) ~ '% Negative'
+             )
+      )
     
-  }
+    
+  #= Generate the equivalent of the SAS one-way table, as defined:
+    #     TITLE "Results: &Question";
+    #     PROC SURVEYFREQ DATA=Responses_&Question TOTAL=Strata_Pop NOSUMMARY;
+    #     TABLES &Question PosNeutNeg_&Question PercentPositive_&Question / cl row(deff) deff;
+    #     STRATA Strata; WEIGHT &Weight;
+    
+    test <- as_survey(workingWeights, strata = Strata, weight = Weight)
+    test %>% group_by(Question) %>% summarise(pct = survey_prop(deff = "replace"))
+   
+    
+    
+# Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
 
-
-#     
-#     PROC FORMAT;
-#     VALUE PosNeutNeg
-#     1 = '% Positive'
-#     2 = '% Neutral'
-#     3 = '% Negative';
-#     
-#     VALUE PercentPositive
-#     1 = '% Positive'
-#     2 = '% Not Positive';
-#     RUN;
-#     
-  
-  responses <- HACE1920_WEIGHTED %>% select(GP_PRAC_NO, n_eligible, as.name(Question), as.name(Weight)) %>%
-    filter(as.name(Question)  == 3) 
-  
-      mutate(Strata = gp_prac_no) %>%
-    filter(Weight != 0) %>%
-    
-    
-    if(Question in Positive){
+ 
       
-    } elseif {
-      
-    }
-    
-  
-#     DATA Responses_&Question;
-#     SET PESURVEY.HACE&Year._WEIGHTED
-#     (KEEP= gp_prac_no n_eligible &Question. &Weight.);
-#     WHERE &Question NOT IN (&Exclude 995 999 .); 
-#     
-#     Strata = gp_prac_no;
-#     
-#     IF &Weight. = 0 THEN DELETE;
-#     
-      
-#     %IF &QuestionType = Indicator OR &QuestionType = Information %THEN %GOTO skip1;
-      
-#     
-#     IF &Question IN (&Positive) THEN DO;
-#     PercentPositive_&Question = 1;
-#     PosNeutNeg_&Question = 1;
-#     END;
-#     
-#     ELSE IF &Question IN (&Neutral) THEN DO;
-#     PercentPositive_&Question = 2;
-#     PosNeutNeg_&Question = 2;
-#     END;
-#     
-#     ELSE IF &Question IN (&Negative) THEN DO;
-#     PercentPositive_&Question = 2;
-#     PosNeutNeg_&Question = 3;
-#     END;
-#     
-#     FORMAT PercentPositive_&Question PercentPositive. PosNeutNeg_&Question PosNeutNeg.;
-#     
-#     %skip1:
-#       RUN;
-#     
-      
-      
-      
-      
-#     %IF &QuestionType = Indicator OR &QuestionType = Information %THEN %GOTO skip2;
-#     
-#     TITLE "Results: &Question";
-#     PROC SURVEYFREQ DATA=Responses_&Question TOTAL=Strata_Pop NOSUMMARY;
-#     TABLES &Question PosNeutNeg_&Question PercentPositive_&Question / cl row(deff) deff;
-#     STRATA Strata; WEIGHT &Weight;
-#     ODS OUTPUT OneWay=OneWayTable_&Question;
-#     RUN;
-#     
-      
-      
-#     %IF &i = &Min_iref %THEN %DO;
-#     DATA OneWay;
-#     SET OneWayTable_&Question; FORMAT i 8. Question $8. WgtFreq 8.2;
-#     Question = "&Question"; i = "&i"; 
-#     
-#     IF PercentPositive_&Question ^= 1 THEN DELETE;
-#     
-#     DROP F_&Question F_PercentPositive_&Question F_PosNeutNeg_&Question PercentPositive_&Question 
-#     PosNeutNeg_&Question Table _SkipLine &Question;
-#     RUN;
-#     
-      
-      
-#     PROC DATASETS LIBRARY=WORK NOLIST;
-#     DELETE OneWayTable_&Question;
-#     QUIT;
-#     %END;
-#     
-      
-      
-#     %ELSE %IF &i ^= &Min_iref %THEN %DO;
-#     DATA OneWayTable_&Question;
-#     SET OneWayTable_&Question; FORMAT i 8. Question $8. WgtFreq 8.2;
-#     Question = "&Question"; i = "&i";			
-#     
-#     IF PercentPositive_&Question ^= 1 THEN DELETE;
-#     
-#     DROP F_&Question F_PercentPositive_&Question F_PosNeutNeg_&Question PercentPositive_&Question 
-#     PosNeutNeg_&Question Table _SkipLine &Question;
-#     RUN;
-#   
-      
-      
-      
-#     PROC APPEND BASE=OneWay DATA=OneWayTable_&Question; RUN;
-#     
-#     PROC DATASETS LIBRARY=WORK NOLIST;
-#     DELETE OneWayTable_&Question;
-#     QUIT;
-#     %END;
-#    
+ 
       
 #     %skip2:
 
@@ -199,6 +115,11 @@
 #     STRATA Strata; WEIGHT &Weight; VAR &Question;
 #     RUN;
 #     %END;
+    
+    
+    
+    
+    
 #     
 #     %IF &QuestionType = Information %THEN %DO;
 #     TITLE "Results: &Question";
@@ -206,19 +127,4 @@
 #     TABLES &Question / cl row(deff) deff; STRATA Strata; WEIGHT &Weight;
 #     RUN;
 #     
-#     %END;
-#     
-#     PROC DATASETS LIBRARY=WORK NOLIST;
-#     DELETE Responses_&Question MACRO_SET_UP;
-#     QUIT;
-#     
-#     %END;
-#     
-#     %MEND HACE1920_RESULTS;
-#     
-#     %HACE1920_RESULTS;
-#     
-#     PROC DATASETS LIBRARY=WORK NOLIST;
-#     DELETE strata_pop pctposquest_only first_pospct_quest min_iref hace1920_questions;
-#     QUIT;
-#     
+     
