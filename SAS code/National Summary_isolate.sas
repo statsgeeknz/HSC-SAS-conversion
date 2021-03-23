@@ -1,4 +1,4 @@
-﻿/*==================================================================================================================*/
+/*==================================================================================================================*/
 /*Preamble code to ingest the dummy dataset*/
 
 
@@ -44,7 +44,7 @@
 /*NOTE: Year will need to be updated in the macro statements manually.*/
 
 /*Select questions of interest by relevant iref (from 101 to 189):*/
-%LET first_question = 101; /*min=101 */
+%LET first_question = 103; /*min=101 */
 %LET last_question = 153; /*max=203 */
 %LET geography = NAT; /*could probably set this up to do this by different geographies, but just use NAT for now */
 
@@ -168,10 +168,10 @@ run;
 			DROP F_&Question F_PercentPositive_&Question F_PosNeutNeg_&Question PercentPositive_&Question 
 				PosNeutNeg_&Question Table _SkipLine &Question;
 		RUN;
-
-		PROC DATASETS LIBRARY=WORK NOLIST;
-			DELETE OneWayTable_&Question;
-		QUIT;
+/**/
+/*		PROC DATASETS LIBRARY=WORK NOLIST;*/
+/*			DELETE OneWayTable_&Question;*/
+/*		QUIT;*/
 	%END;
 
 	%ELSE %IF &i ^= &Min_iref %THEN %DO;
