@@ -74,10 +74,10 @@
   
   test <- processLikert(currentQuestion, HACE_Weighted)
   
-  test <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted)
+  test <- pbapply::pblapply(positiveQuestions[1], processLikert, weightData = HACE_Weighted)
   
   processLikert <- function(questData, weightData){
-    
+    print(questData$iref)
   #= select & rename from weighted dataset, drop exclusions and zero weights
     workingWeights <- weightData %>% 
       select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
