@@ -12,6 +12,7 @@
 
   library(tidyverse)
   library(srvyr)
+  library(pbapply)
 
   #= only plays a role in the names of files - redundant in the SAS example
   Year <- 1920
@@ -69,24 +70,28 @@
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
 
-    currentQuestion <- positiveQuestions[[1]]
+  currentQuestion <- positiveQuestions[[1]]
   
+  test <- processLikert(currentQuestion, HACE_Weighted)
+  
+  test <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted)
+  
+  processLikert <- function(questData, weightData){
     
   #= select & rename from weighted dataset, drop exclusions and zero weights
-    workingWeights <- HACE_Weighted %>% 
-      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
-      mutate(Exclude = currentQuestion$Exclude, 
-             Positive = currentQuestion$Positive, 
-             Neutral = currentQuestion$Neutral,
-             Negative = currentQuestion$Negative) %>%
-      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
+    workingWeights <- weightData %>% 
+      select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
+      mutate(Exclude = questData$Exclude, 
+             Positive = questData$Positive, 
+             Neutral = questData$Neutral,
+             Negative = questData$Negative) %>%
+      rename(Strata = GP_PRAC_NO, Question = questData$Question, Weight = questData$Weight2) %>%
       mutate(Question = as.character(Question)) %>%
       filter(Question != 995, Question != 999, Weight != 0) %>%
       filter(!(is.na(Exclude)==F & Exclude == Question))
     
-  #= Code whether positive (1/2), or pos/neut/neg (1/2/3) depending on definition 
-   
-  
+  #= Code whether positive (1/2), or pos/neut/neg (1/2/3) depending on definition - note case_when is very slow, so nested ifelse
+
     workingWeights <- workingWeights %>% rowwise() %>%  
       mutate(
         PercentPositive = ifelse(grepl(Question, Positive), '% Positive', '% Not Positive'),
@@ -102,19 +107,25 @@
     
     workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
     
-    workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-    workingSurvey %>% group_by(PercentPositive) %>% summarise(pct = survey_prop(deff = "replace"))
-    workingSurvey %>% group_by(PosNeutNeg) %>% summarise(pct = survey_prop(deff = "replace"))
-   
+  #= create the required summary tables
     
+    questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+    percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+    posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+   
+  list(questTable, percentPosTable, posNeutNegTable)  
+  
+  } # end processLikert function
+  
+  
+  
     
 # Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
 
- 
+  #= Note the lists for these types of questions might be empty
+    
     currentQuestion <- indicatorQuestions[[1]]
  
-
-    
     workingWeights <- HACE_Weighted %>% 
       select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
       mutate(Exclude = currentQuestion$Exclude) %>%
@@ -124,7 +135,7 @@
       filter(!(is.na(Exclude)==F & Exclude == Question))
     
     test <- as_survey(workingWeights, strata = Strata, weight = Weight)
-    test %>% group_by(Question) %>% summarise(pct = survey_prop(deff = "replace"))
+    test %>% group_by(Question) %>% summarise(pct = survey_prop(deff = T))
     
     
 #     %skip2:
