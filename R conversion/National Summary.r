@@ -16,13 +16,17 @@
   #= only plays a role in the names of files - redundant in the SAS example
   Year <- 1920
 
-  #= paths
+  #= paths - going to assume named in a consistent way, only need path and year
   dataPath <- "data/"
   
+  questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
+  strataPath <- paste0(dataPath, "HACE", Year, "_STRATA_DATA - Dummy data.csv")
+  weightPath <- paste0(dataPath, "HACE", Year, "_WEIGHTED - Dummy data.csv")
+  
   #= read in example datasets - data management in reality TBD
-  HACE1920_QUESTIONS <- read_csv("data/HACE1920_QUESTIONS.csv")
-  HACE1920_STRATA_DATA <- read_csv("data/HACE1920_STRATA_DATA - Dummy data.csv")
-  HACE1920_WEIGHTED <- read_csv("data/HACE1920_WEIGHTED - Dummy data.csv")
+  HACE_Questions <- read_csv(questionPath)
+  HACE_Strata <- read_csv(strataPath)
+  HACE_Weighted <- read_csv(weightPath)
 
   #= range of questions to ingest (indexed by variable iref)
   first_question <- 101
@@ -35,18 +39,18 @@
 
 
   # HSC comment: "Set up strata populations"
-  Strata_Pop <- HACE1920_STRATA_DATA %>% rename(total = n_eligible) %>% select(strata, total) %>% arrange(strata) %>% rename(Strata = strata)
+  Strata_Pop <- HACE_Strata %>% rename(total = n_eligible) %>% select(strata, total) %>% arrange(strata) %>% rename(Strata = strata)
 
 
   # HSC comment: "Calculate the iref for the first percent positive question in the questions of interest:"
-  PctPosQuest_Only <- HACE1920_QUESTIONS %>% filter(between(iref, first_question, last_question),
+  PctPosQuest_Only <- HACE_Questions %>% filter(between(iref, first_question, last_question),
                                                     QuestionType == "Percent positive")
   
   # Create equiv of the SAS variable &Min_iref, which is long-winded use of symput after proc means
   Min_iref <- min(PctPosQuest_Only$iref)
   
   # equivalent of work.HACE&Year._QUESTIONS
-  workingQuestions <- HACE1920_QUESTIONS %>% mutate(
+  workingQuestions <- HACE_Questions %>% mutate(
     geography = geography, Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography)))
 
   
@@ -69,7 +73,7 @@
   
     
   #= select & rename from weighted dataset, drop exclusions and zero weights
-    workingWeights <- HACE1920_WEIGHTED %>% 
+    workingWeights <- HACE_Weighted %>% 
       select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
       mutate(Exclude = currentQuestion$Exclude, 
              Positive = currentQuestion$Positive, 
@@ -111,7 +115,7 @@
  
 
     
-    workingWeights <- HACE1920_WEIGHTED %>% 
+    workingWeights <- HACE_Weighted %>% 
       select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
       mutate(Exclude = currentQuestion$Exclude) %>%
       rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
@@ -138,7 +142,7 @@
     
     
     
-    workingWeights <- HACE1920_WEIGHTED %>% 
+    workingWeights <- HACE_Weighted %>% 
       select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
       mutate(Exclude = currentQuestion$Exclude) %>%
       rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
