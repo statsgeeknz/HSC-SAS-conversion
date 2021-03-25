@@ -149,6 +149,10 @@ run;
 		%skip1:
 	RUN;
 
+proc sort data = Responses_&Question;
+by strata;
+run;
+
 	%IF &QuestionType = Indicator OR &QuestionType = Information %THEN %GOTO skip2;
 
 	TITLE "Results: &Question";
