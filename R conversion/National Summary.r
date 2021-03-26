@@ -47,18 +47,12 @@
   Strata_Pop <- HACE_Strata %>% rename(total = n_eligible) %>% select(strata, total) %>% arrange(strata) %>% rename(Strata = strata)
 
 
-  # HSC comment: "Calculate the iref for the first percent positive question in the questions of interest:"
-  PctPosQuest_Only <- HACE_Questions %>% filter(between(iref, first_question, last_question),
-                                                    QuestionType == "Percent positive")
-  
-  # Create equiv of the SAS variable &Min_iref, which is long-winded use of symput after proc means
-  Min_iref <- min(PctPosQuest_Only$iref)
-  
   # equivalent of work.HACE&Year._QUESTIONS
-  workingQuestions <- HACE_Questions %>% mutate(
-    geography = geography, Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography)))
-
-  
+  workingQuestions <- HACE_Questions %>% 
+    filter(between(iref, first_question, last_question)) %>% 
+             mutate(geography = geography, 
+                    Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography))
+                    )
 
 # Macro conversion to function ------------------------------------------------------------------------------------------------------------------
 
@@ -78,10 +72,13 @@
   
   test <- processLikert(currentQuestion, HACE_Weighted)
   
-  test <- pbapply::pblapply(positiveQuestions[9], processLikert, weightData = HACE_Weighted)
+  test <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted)
   
   processLikert <- function(questData, weightData){
-    print(questData$iref)
+    
+    # For debugging purposes
+    print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
+    
   #= select & rename from weighted dataset, drop exclusions and zero weights
     workingWeights <- weightData %>% 
       select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
