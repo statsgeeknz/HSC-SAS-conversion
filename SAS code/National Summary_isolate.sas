@@ -44,8 +44,8 @@
 /*NOTE: Year will need to be updated in the macro statements manually.*/
 
 /*Select questions of interest by relevant iref (from 101 to 189):*/
-%LET first_question = 103; /*min=101 */
-%LET last_question = 153; /*max=203 */
+%LET first_question = 113; /*min=101 */
+%LET last_question = 114; /*max=203 */
 %LET geography = NAT; /*could probably set this up to do this by different geographies, but just use NAT for now */
 
 
