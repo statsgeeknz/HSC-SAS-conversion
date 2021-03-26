@@ -36,6 +36,10 @@
   #= gives a suffix for a variable called from the data
   geography <- "NAT"
 
+  
+  # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates"
+  options(survey.lonely.psu="remove")
+  
 # Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
 
 
@@ -74,7 +78,7 @@
   
   test <- processLikert(currentQuestion, HACE_Weighted)
   
-  test <- pbapply::pblapply(positiveQuestions[8], processLikert, weightData = HACE_Weighted)
+  test <- pbapply::pblapply(positiveQuestions[9], processLikert, weightData = HACE_Weighted)
   
   processLikert <- function(questData, weightData){
     print(questData$iref)
@@ -103,7 +107,7 @@
 
   #= Generate the equivalent of the SAS one-way table, as defined:
 
-    workingSurvey <- workingWeights %>% right_join(Strata_Pop, by = "Strata")
+    workingSurvey <- workingWeights %>% inner_join(Strata_Pop, by = "Strata")
     
     workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
     
