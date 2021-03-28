@@ -13,6 +13,9 @@
   library(tidyverse)
   library(srvyr)
   library(pbapply)
+  library(parallel)
+  
+  source("R conversion/tools.R")
 
   #= only plays a role in the names of files - redundant in the SAS example
   Year <- 1920
@@ -36,10 +39,15 @@
   #= gives a suffix for a variable called from the data
   geography <- "NAT"
 
-  
   # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates"
   options(survey.lonely.psu="remove")
+
+  # Calculate the number of cores
+  noCores <- detectCores() - 1
   
+  # Initiate cluster
+  myCl <- makeCluster(noCores)
+    
 # Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
 
 
@@ -72,53 +80,9 @@
   
   test <- processLikert(currentQuestion, HACE_Weighted)
   
-  test <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted)
+  test <- pbapply::pblapply(positiveQuestions[1:4], processLikert, weightData = HACE_Weighted, cl = myCl)
   
-  processLikert <- function(questData, weightData){
-    
-    # For debugging purposes
-    print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
-    
-  #= select & rename from weighted dataset, drop exclusions and zero weights
-    workingWeights <- weightData %>% 
-      select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
-      mutate(Exclude = questData$Exclude, 
-             Positive = questData$Positive, 
-             Neutral = questData$Neutral,
-             Negative = questData$Negative) %>%
-      rename(Strata = GP_PRAC_NO, Question = questData$Question, Weight = questData$Weight2) %>%
-      mutate(Question = as.character(Question)) %>%
-      filter(Question != 995, Question != 999, Weight != 0) %>%
-      filter(!(is.na(Exclude)==F & Exclude == Question))
-    
-  #= Code whether positive (1/2), or pos/neut/neg (1/2/3) depending on definition - note case_when is very slow, so nested ifelse
-
-    workingWeights <- workingWeights %>% rowwise() %>%  
-      mutate(
-        PercentPositive = ifelse(grepl(Question, Positive), '% Positive', '% Not Positive'),
-        PosNeutNeg = ifelse(grepl(Question, Positive), '% Positive', ""), 
-        PosNeutNeg = ifelse(grepl(Question, Neutral), '% Neutral', PosNeutNeg), 
-        PosNeutNeg = ifelse(grepl(Question, Negative), '% Negative', PosNeutNeg)
-      )
-    
-
-  #= Generate the equivalent of the SAS one-way table, as defined:
-
-    workingSurvey <- workingWeights %>% inner_join(Strata_Pop, by = "Strata")
-    
-    workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
-    
-  #= create the required summary tables
-    
-    questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-    percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-    posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-   
-  list(questTable, percentPosTable, posNeutNegTable)  
-  
-  } # end processLikert function
-  
-  
+ 
   
     
 # Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
