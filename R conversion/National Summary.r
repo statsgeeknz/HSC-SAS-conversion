@@ -15,13 +15,15 @@
   library(pbapply)
   library(parallel)
   
-  source("R conversion/tools.R")
+  setwd("R conversion/")
+  
+  source("tools.R")
 
   #= only plays a role in the names of files - redundant in the SAS example
   Year <- 1920
 
   #= paths - going to assume named in a consistent way, only need path and year
-  dataPath <- "data/"
+  dataPath <- "../data/"
   
   questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
   strataPath <- paste0(dataPath, "HACE", Year, "_STRATA_DATA - Dummy data.csv")
@@ -45,9 +47,6 @@
   # Calculate the number of cores
   noCores <- detectCores() - 1
   
-  # Initiate cluster
-  myCl <- makeCluster(noCores)
-    
 # Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
 
 
@@ -73,49 +72,48 @@
   positiveQuestions <- workingQuestions %>% filter(QuestionType == "Percent positive") %>% split(., .$Question)
   
   
+
+# Prepare parallelisation -----------------------------------------------------------------------------------------------------------------------
+
+  # Initiate cluster
+  myCl <- makeCluster(noCores)
+  
+  # Load necessary bits to the cluster nodes
+  
+  clusterEvalQ(myCl, {library(tidyverse); library(srvyr);  source("tools.r"); options(survey.lonely.psu="remove")})
+  
+  clusterExport(myCl, c("Strata_Pop", "processLikert", "HACE_Weighted", "positiveQuestions", "indicatorQuestions", "infoQuestions"))
+  
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
-  test <- pbapply::pblapply(positiveQuestions[1:2], processLikert, weightData = HACE_Weighted, strataData = Strata_Pop)
+  # srvyr functions are a bottle-neck - parallelising to mitigate
+  
+  positiveQTables <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
 
 # Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
 
   #= Note the lists for these types of questions might be empty
+  
+  if(length(indicatorQuestions) > 0) {  
     
-    currentQuestion <- indicatorQuestions[[1]]
- 
-    workingWeights <- HACE_Weighted %>% 
-      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
-      mutate(Exclude = currentQuestion$Exclude) %>%
-      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
-      mutate(Question = as.character(Question)) %>%
-      filter(Question != 995, Question != 999, Weight != 0) %>%
-      filter(!(is.na(Exclude)==F & Exclude == Question))
-    
-    test <- as_survey(workingWeights, strata = Strata, weight = Weight)
-    test %>% group_by(Question) %>% summarise(pct = survey_prop(deff = T))
-    
-    
-#     %skip2:
+    indicatorQTables <- pbapply::pblapply(indicatorQuestions, processInformation, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+  
+    }
 
-      
-#       %IF &QuestionType = Indicator %THEN %DO;
-#     TITLE "Results: &Question";
-#     PROC SURVEYMEANS DATA=Responses_&Question Total=Strata_Pop;
-#     STRATA Strata; WEIGHT &Weight; VAR &Question;
-#     RUN;
-#     %END;
-    
+  #= Note the lists for these types of questions might be empty
   
-    currentQuestion <- infoQuestions[[1]]
+  if(length(infoQuestions) > 0) {  
     
-    test <- processInformation()
- 
+    infoQTables <- pbapply::pblapply(infoQuestions, processInformation, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+    
+  }
   
-#     
-#     %IF &QuestionType = Information %THEN %DO;
-#     TITLE "Results: &Question";
-#     PROC SURVEYFREQ DATA=Responses_&Question Total=Strata_Pop;
-#     TABLES &Question / cl row(deff) deff; STRATA Strata; WEIGHT &Weight;
-#     RUN;
-#     
+  
+  
+# Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
+
+  stopCluster(myCl)
+  gc()
+  
+    
      

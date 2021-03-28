@@ -82,34 +82,33 @@
   #' Value:
   #'  - Returns table from running summaries from srvyr
   
-  
   processIndicator <- function(questData, weightData, strataData){
     
-    # # For debugging purposes
-    # print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
-    # 
-    # #= select & rename from weighted dataset, drop exclusions and zero weights
-    # workingWeights <- HACE_Weighted %>% 
-    #   select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
-    #   mutate(Exclude = currentQuestion$Exclude) %>%
-    #   rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
-    #   mutate(Question = as.character(Question)) %>%
-    #   filter(Question != 995, Question != 999, Weight != 0) %>%
-    #   filter(!(is.na(Exclude)==F & Exclude == Question))
-    # 
-    # #= Generate the equivalent of the SAS one-way table, as defined:
-    # 
-    # workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
-    # 
-    # workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
-    # 
-    # #= create the required summary tables
-    # 
-    # questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-    # 
-    # list(questTable)  
-    # 
-  } # end processIndicator function
+    # For debugging purposes
+    print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
+    
+    #= select & rename from weighted dataset, drop exclusions and zero weights
+    workingWeights <- weightData %>% 
+      select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
+      mutate(Exclude = questData$Exclude) %>%
+      rename(Strata = GP_PRAC_NO, Question = questData$Question, Weight = questData$Weight2) %>%
+      mutate(Question = as.character(Question)) %>%
+      filter(Question != 995, Question != 999, Weight != 0) %>%
+      filter(!(is.na(Exclude)==F & Exclude == Question))
+    
+    #= Generate the equivalent of the SAS one-way table, as defined:
+    
+    workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
+    
+    workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
+    
+    #= create the required summary tables
+    
+    questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightMean = survey_mean(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+    
+    list(questTable)  
+  
+  } # end of processIndicator
   
   
   
@@ -134,10 +133,10 @@
     print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
     
     #= select & rename from weighted dataset, drop exclusions and zero weights
-    workingWeights <- HACE_Weighted %>% 
-      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
-      mutate(Exclude = currentQuestion$Exclude) %>%
-      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
+    workingWeights <- weightData %>% 
+      select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
+      mutate(Exclude = questData$Exclude) %>%
+      rename(Strata = GP_PRAC_NO, Question = questData$Question, Weight = questData$Weight2) %>%
       mutate(Question = as.character(Question)) %>%
       filter(Question != 995, Question != 999, Weight != 0) %>%
       filter(!(is.na(Exclude)==F & Exclude == Question))
