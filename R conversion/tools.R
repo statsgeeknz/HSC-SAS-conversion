@@ -12,6 +12,8 @@
   #' Args:
   #'  - questData: a row of data from the questions dataset. Ought to be filtered prior so QuestionType == "Percent positive"
   #'  - weightData: the XX..XX_WEIGHTED dataset. Has columns of responses to the particular questions and GP_PRAC_NO,	, T5_Wt_FinalNAT, n_eligible
+  #'  - strataData: the XX..XX_STRATA dataset, has cols for strata and n_eligible (the stata_pop of the SAS code)
+
   #'  
   #' Value:
   #'  - Returns list with 3 tables from running summaries from srvyr giving:
@@ -20,7 +22,7 @@
   #'    - posNeutNegTable: input question responses codes as postive, neutral or negative
   
   
-  processLikert <- function(questData, weightData){
+  processLikert <- function(questData, weightData, strataData){
     
     # For debugging purposes
     print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
@@ -50,7 +52,7 @@
     
     #= Generate the equivalent of the SAS one-way table, as defined:
     
-    workingSurvey <- workingWeights %>% inner_join(Strata_Pop, by = "Strata")
+    workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
     
     workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
     
@@ -63,4 +65,96 @@
     list(questTable, percentPosTable, posNeutNegTable)  
     
   } # end processLikert function
+  
+
+  
+# processIndicator function ------------------------------------------------------------------------------------------------------------------------
+  #' Function to process questions of type "Indicator", in the HACEYYYY_QUESTIONS dataset
+  #' 
+  #' Matches rows of the questions dataset to columns of the weights dataset.
+  #' 
+  #' Args:
+  #'  - questData: a row of data from the questions dataset. Ought to be filtered prior so QuestionType == "Percent positive"
+  #'  - weightData: the XX..XX_WEIGHTED dataset. Has columns of responses to the particular questions and GP_PRAC_NO,	, T5_Wt_FinalNAT, n_eligible
+  #'  - strataData: the XX..XX_STRATA dataset, has cols for strata and n_eligible (the stata_pop of the SAS code)
+  
+  #'  
+  #' Value:
+  #'  - Returns table from running summaries from srvyr
+  
+  
+  processIndicator <- function(questData, weightData, strataData){
+    
+    # # For debugging purposes
+    # print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
+    # 
+    # #= select & rename from weighted dataset, drop exclusions and zero weights
+    # workingWeights <- HACE_Weighted %>% 
+    #   select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
+    #   mutate(Exclude = currentQuestion$Exclude) %>%
+    #   rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
+    #   mutate(Question = as.character(Question)) %>%
+    #   filter(Question != 995, Question != 999, Weight != 0) %>%
+    #   filter(!(is.na(Exclude)==F & Exclude == Question))
+    # 
+    # #= Generate the equivalent of the SAS one-way table, as defined:
+    # 
+    # workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
+    # 
+    # workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
+    # 
+    # #= create the required summary tables
+    # 
+    # questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+    # 
+    # list(questTable)  
+    # 
+  } # end processIndicator function
+  
+  
+  
+# processInformation function ------------------------------------------------------------------------------------------------------------------------
+  #' Function to process questions of type "Information", in the HACEYYYY_QUESTIONS dataset
+  #' 
+  #' Matches rows of the questions dataset to columns of the weights dataset.
+  #' 
+  #' Args:
+  #'  - questData: a row of data from the questions dataset. Ought to be filtered prior so QuestionType == "Percent positive"
+  #'  - weightData: the XX..XX_WEIGHTED dataset. Has columns of responses to the particular questions and GP_PRAC_NO,	, T5_Wt_FinalNAT, n_eligible
+  #'  - strataData: the XX..XX_STRATA dataset, has cols for strata and n_eligible (the stata_pop of the SAS code)
+  
+  #'  
+  #' Value:
+  #'  - Returns table from running summaries from srvyr
+  
+  
+  processInformation <- function(questData, weightData, strataData){
+    
+    # For debugging purposes
+    print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
+    
+    #= select & rename from weighted dataset, drop exclusions and zero weights
+    workingWeights <- HACE_Weighted %>% 
+      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
+      mutate(Exclude = currentQuestion$Exclude) %>%
+      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
+      mutate(Question = as.character(Question)) %>%
+      filter(Question != 995, Question != 999, Weight != 0) %>%
+      filter(!(is.na(Exclude)==F & Exclude == Question))
+    
+    #= Generate the equivalent of the SAS one-way table, as defined:
+    
+    workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
+    
+    workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
+    
+    #= create the required summary tables
+    
+    questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+    
+    list(questTable)  
+    
+  } # end processInformation function
+  
+  
   
