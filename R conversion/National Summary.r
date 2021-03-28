@@ -66,25 +66,17 @@
 
   # Three broad types of questions that get different treatment
   
-  infoQuestions <- workingQuestions %>% filter(QuestionType == "Information") %>% split(., .$iref)
+  infoQuestions <- workingQuestions %>% filter(QuestionType == "Information") %>% split(., .$Question)
   
-  indicatorQuestions <- workingQuestions %>% filter(QuestionType == "Indicator") %>% split(., .$iref)
+  indicatorQuestions <- workingQuestions %>% filter(QuestionType == "Indicator") %>% split(., .$Question)
   
-  positiveQuestions <- workingQuestions %>% filter(QuestionType == "Percent positive") %>% split(., .$iref)
+  positiveQuestions <- workingQuestions %>% filter(QuestionType == "Percent positive") %>% split(., .$Question)
   
   
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
+  test <- pbapply::pblapply(positiveQuestions[1:2], processLikert, weightData = HACE_Weighted, strataData = Strata_Pop)
 
-  currentQuestion <- positiveQuestions[[1]]
-  
-  test <- processLikert(currentQuestion, HACE_Weighted)
-  
-  test <- pbapply::pblapply(positiveQuestions[1:4], processLikert, weightData = HACE_Weighted, cl = myCl)
-  
- 
-  
-    
 # Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
 
   #= Note the lists for these types of questions might be empty
@@ -116,20 +108,8 @@
   
     currentQuestion <- infoQuestions[[1]]
     
-    
-    
-    workingWeights <- HACE_Weighted %>% 
-      select(GP_PRAC_NO, n_eligible, currentQuestion$Question, currentQuestion$Weight2) %>%
-      mutate(Exclude = currentQuestion$Exclude) %>%
-      rename(Strata = GP_PRAC_NO, Question = currentQuestion$Question, Weight = currentQuestion$Weight2) %>%
-      mutate(Question = as.character(Question)) %>%
-      filter(Question != 995, Question != 999, Weight != 0) %>%
-      filter(!(is.na(Exclude)==F & Exclude == Question))
-    
-    test <- as_survey(workingWeights, strata = Strata, weight = Weight)
-    test %>% group_by(Question) %>% summarise(pct = survey_prop(deff = "replace"))
-    
-    
+    test <- processInformation()
+ 
   
 #     
 #     %IF &QuestionType = Information %THEN %DO;
