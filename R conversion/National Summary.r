@@ -55,23 +55,14 @@
 
 
   # equivalent of work.HACE&Year._QUESTIONS
-  workingQuestions <- HACE_Questions %>% 
-    filter(between(iref, first_question, last_question)) %>% 
-             mutate(geography = geography, 
-                    Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography))
-                    )
+  workingQuestions <- HACE_Questions %>% filter(between(iref, first_question, last_question)) %>% 
+             mutate(geography = geography, Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography)))
 
 # Macro conversion to function ------------------------------------------------------------------------------------------------------------------
 
   # Three broad types of questions that get different treatment
   
-  infoQuestions <- workingQuestions %>% filter(QuestionType == "Information") %>% split(., .$Question)
-  
-  indicatorQuestions <- workingQuestions %>% filter(QuestionType == "Indicator") %>% split(., .$Question)
-  
-  positiveQuestions <- workingQuestions %>% filter(QuestionType == "Percent positive") %>% split(., .$Question)
-  
-  
+ questionList <- workingQuestions %>% split(., .$Question)
 
 # Prepare parallelisation -----------------------------------------------------------------------------------------------------------------------
 
@@ -82,34 +73,14 @@
   
   clusterEvalQ(myCl, {library(tidyverse); library(srvyr);  source("tools.r"); options(survey.lonely.psu="remove")})
   
-  clusterExport(myCl, c("Strata_Pop", "processLikert", "HACE_Weighted", "positiveQuestions", "indicatorQuestions", "infoQuestions"))
+  clusterExport(myCl, c("Strata_Pop", "processQuestions", "HACE_Weighted", "questionList"))
   
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
   # srvyr functions are a bottle-neck - parallelising to mitigate
   
-  positiveQTables <- pbapply::pblapply(positiveQuestions, processLikert, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+  questionTables <- pbapply::pblapply(questionList, processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
 
-# Non  Indicator OR Information questions -------------------------------------------------------------------------------------------------------
-
-  #= Note the lists for these types of questions might be empty
-  
-  if(length(indicatorQuestions) > 0) {  
-    
-    indicatorQTables <- pbapply::pblapply(indicatorQuestions, processInformation, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
-  
-    }
-
-  #= Note the lists for these types of questions might be empty
-  
-  if(length(infoQuestions) > 0) {  
-    
-    infoQTables <- pbapply::pblapply(infoQuestions, processInformation, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
-    
-  }
-  
-  
-  
 # Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
 
   stopCluster(myCl)
