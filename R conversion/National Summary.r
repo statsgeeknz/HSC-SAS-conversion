@@ -23,7 +23,7 @@
   Year <- 1920
 
   #= paths - going to assume named in a consistent way, only need path and year
-  dataPath <- "../data/"
+  dataPath <- "data/"
   
   questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
   strataPath <- paste0(dataPath, "HACE", Year, "_STRATA_DATA - Dummy data.csv")
