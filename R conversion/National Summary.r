@@ -26,6 +26,7 @@
 
   #= paths - going to assume named in a consistent way, only need path and year - expect only " - Dummy data" be removed in practice
   dataPath <- "data/"
+  outputPath <- "results/"
   
   questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
   strataPath <- paste0(dataPath, "HACE", Year, "_STRATA_DATA - Dummy data.csv")
@@ -93,8 +94,16 @@
   
   # = aggregate lists into flat files
   
+  onewayList <- lapply(questionTables, function(q){if(q$questionType == "Percent positive"){
+      q$percentPosTable %>% filter(PercentPositive == "% Positive")
+      } else {NULL}
+    })
   
+  onewayTable <- plyr::ldply(onewayList) %>% rename(Question = .id)
   
+  # = write out results
+  
+  write_csv(paste0(outputPath, "onewayR.csv"))
   
   # = close out the cluster nodes if needed
   
