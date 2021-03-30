@@ -23,3 +23,15 @@ The repo contains the following:
 * PSU with only 1 observation cannot provide a variance estimate. In SAS the log notes "Single-observation strata are not included in the variance estimates" but is not immediately explicit in the helpfiles. The R-version uses the option `options(survey.lonely.psu="remove")` which appears to give the same effect.
 
 * The SAS code includes an IF for a question type of "Indicator" which does not appear in the data. This is not replicated in the R code (but there is a catch for alternative question types, returning NULL).
+
+* Code has been tested using:
+  * R version 3.6.3 (includes `parallel` v 3.6.3)
+  * R Studio 1.2.5042 (vs the requested 1.2.5033 - not archived)
+  * `tidyverse` version 1.3.0
+  * `srvyr`, version 1.0.0
+  * `pbapply`, version 1.4-2
+  * `plyr`, version 1.8.6
+
+All legacy packages downloaded from http://cran.us.r-project.org (accessed 30/03/2021). R and RStudio from their respective websites.
+  
+  
