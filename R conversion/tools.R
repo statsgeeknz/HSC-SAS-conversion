@@ -61,9 +61,17 @@
       
       #= create the required summary tables
       
-      questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-      percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
-      posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+      questTable <- workingSurvey %>% group_by(Question) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
       
       return(list(questionType = questData$QuestionType, questTable =questTable, percentPosTable = percentPosTable, posNeutNegTable = posNeutNegTable))
     
@@ -82,7 +90,9 @@
       
       #= create the required summary tables
       
-      questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
+      questTable <- workingSurvey %>% group_by(Question) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
       
       return(list(questionType = questData$QuestionType, questTable = questTable))
       
