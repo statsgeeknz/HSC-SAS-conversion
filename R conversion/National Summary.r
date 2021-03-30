@@ -44,8 +44,10 @@
   # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates"
   options(survey.lonely.psu="remove")
 
-  # Calculate the number of cores
+  # Calculate the number of cores - optional parallelisation via makeParallel = T/F
+  makeParallel <- T
   noCores <- detectCores() - 1
+  myCl <- NULL
   
 # Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
 
@@ -66,25 +68,31 @@
 
 # Prepare parallelisation -----------------------------------------------------------------------------------------------------------------------
 
-  # Initiate cluster
-  myCl <- makeCluster(noCores)
-  
-  # Load necessary bits to the cluster nodes
-  
-  clusterEvalQ(myCl, {library(tidyverse); library(srvyr);  source("tools.r"); options(survey.lonely.psu="remove")})
-  
-  clusterExport(myCl, c("Strata_Pop", "processQuestions", "HACE_Weighted", "questionList"))
+  if(makeParallel){
+    
+    # Initiate cluster
+    myCl <- makeCluster(noCores)
+    
+    # Load necessary bits to the cluster nodes
+    
+    clusterEvalQ(myCl, {library(tidyverse); library(srvyr);  source("tools.r"); options(survey.lonely.psu="remove")})
+    
+    clusterExport(myCl, c("Strata_Pop", "processQuestions", "HACE_Weighted", "questionList"))
+    
+  }
   
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
   # srvyr functions are a bottle-neck - parallelising to mitigate
   
-  questionTables <- pbapply::pblapply(questionList, processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+  questionTables <- pbapply::pblapply(questionList[1:10], processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
 
 # Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
-
-  stopCluster(myCl)
-  gc()
+  
+  if(makeParallel){
+    stopCluster(myCl)
+    gc()
+  }
   
     
      
