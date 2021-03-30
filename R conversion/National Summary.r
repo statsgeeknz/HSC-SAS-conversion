@@ -88,7 +88,7 @@
 
   # srvyr functions are a bottle-neck - parallelising to mitigate
   
-  questionTables <- pbapply::pblapply(questionList[1:10], processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+  questionTables <- pbapply::pblapply(questionList, processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
 
 # Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
   
@@ -103,7 +103,7 @@
   
   # = write out results
   
-  write_csv(paste0(outputPath, "onewayR.csv"))
+  write_csv(x = onewayTable, path = paste0(outputPath, "onewayR.csv"))
   
   # = close out the cluster nodes if needed
   
