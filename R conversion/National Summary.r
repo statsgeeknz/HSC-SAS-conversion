@@ -17,6 +17,7 @@
   library(pbapply)
   library(parallel)
   
+  # if running from different direction to functions e.g. using the R project
   setwd("R conversion/")
   
   source("tools.R")
