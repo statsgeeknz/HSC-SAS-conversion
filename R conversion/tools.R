@@ -65,7 +65,7 @@
       percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
       posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
       
-      return(list(questionType = questData$QuestionType, questTable, percentPosTable, posNeutNegTable))
+      return(list(questionType = questData$QuestionType, questTable =questTable, percentPosTable = percentPosTable, posNeutNegTable = posNeutNegTable))
     
     } # end if
     
@@ -84,7 +84,7 @@
       
       questTable <- workingSurvey %>% group_by(Question) %>% summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T))
       
-      return(list(questionType = questData$QuestionType, questTable))
+      return(list(questionType = questData$QuestionType, questTable = questTable))
       
     } else {
       
