@@ -16,9 +16,9 @@ The repo contains the following:
 
 * The R code has been written to run on version 3.6.3 
 
-* The I/O for the users is not part of the specification (e.g. input data filenames, their locations, format, output locations), so modifications to the preamble will be required. Currently this sets the working directory to `R conversion`, with a data folder contained within. 
+* The I/O for the users is not part of the specification (e.g. input  data filenames, their locations, format, output locations), so modifications to the preamble will be required. Currently this sets the working directory to `R conversion`, with a data folder contained within. 
 
-* The R version is markedly slower than SAS. The R-package `srvyr` is used and summary tables from this are currently a limiting factor. To mitigate, the R code is parallelised. As a rough indication, SAS completes on the test sets in the order of 10-20 seconds on a 11th-Gen i7 laptop, whereas R is near 3 minutes. Parallelisation over 7 cores brings this to near 1 minute. 
+* The R version is markedly slower than SAS. The R-package `srvyr` is used and summary tables from this are currently a limiting factor. To mitigate, the R code is parallelised. As a rough indication, SAS completes on the test sets in the order of 10-20 seconds on a 10th-Gen i7 laptop, whereas R is near 3 minutes. Parallelisation over 7 cores brings this to near 1 minute. 
 
 * PSU with only 1 observation cannot provide a variance estimate. In SAS the log notes "Single-observation strata are not included in the variance estimates" but is not immediately explicit in the helpfiles. The R-version uses the option `options(survey.lonely.psu="remove")` which appears to give the same effect.
 
