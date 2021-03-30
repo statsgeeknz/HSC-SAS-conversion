@@ -4,9 +4,11 @@
 #'  Author: CRD
 #'  Created: 22/03/2021
 #'  
+#'   Provides functionality similar to the provided SAS code - mainly an argument-free macro within "National Summary.sas"
+#'   Code below is markedly slower than SAS, due mainly to speed of the srvyr (wraps survey package)
 #'   
-#' 
-
+#'   Users will have to modify several inputs in the preamble to suit their situation - currently written around the dummy CSV data provided.
+#'   
 
 # Preamble --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +24,7 @@
   #= only plays a role in the names of files - redundant in the SAS example
   Year <- 1920
 
-  #= paths - going to assume named in a consistent way, only need path and year
+  #= paths - going to assume named in a consistent way, only need path and year - expect only " - Dummy data" be removed in practice
   dataPath <- "data/"
   
   questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
@@ -41,13 +43,13 @@
   #= gives a suffix for a variable called from the data
   geography <- "NAT"
 
-  # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates"
+  # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates". Also passed to parallel nodes.
   options(survey.lonely.psu="remove")
 
   # Calculate the number of cores - optional parallelisation via makeParallel = T/F
   makeParallel <- T
   noCores <- detectCores() - 1
-  myCl <- NULL
+  myCl <- NULL # populated later if makeParallel = T
   
 # Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
 
@@ -62,7 +64,7 @@
 
 # Macro conversion to function ------------------------------------------------------------------------------------------------------------------
 
-  # Three broad types of questions that get different treatment
+  # Create a list of questions to loop over - refer pbapply later
   
  questionList <- workingQuestions %>% split(., .$Question)
 
@@ -79,7 +81,7 @@
     
     clusterExport(myCl, c("Strata_Pop", "processQuestions", "HACE_Weighted", "questionList"))
     
-  }
+    }
   
 # Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
 
@@ -89,10 +91,19 @@
 
 # Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
   
+  # = aggregate lists into flat files
+  
+  
+  
+  
+  # = close out the cluster nodes if needed
+  
   if(makeParallel){
+    
     stopCluster(myCl)
     gc()
-  }
+  
+    } # end if
   
     
      
