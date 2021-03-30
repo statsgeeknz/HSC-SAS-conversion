@@ -14,9 +14,11 @@
   #'  
   #' Value:
   #'  - Returns list with 3 tables from running summaries from srvyr giving:
+  #'    - questionType: char indicating whether the question was "Percent positive" or "Information"
   #'    - questTable: response levels of the input question
   #'    - percentPosTable: input question responses codes as postive or negative
   #'    - posNeutNegTable: input question responses codes as postive, neutral or negative
+  #'    - NB - if the question type is "Information", only the the questTable is returned
   
   
   processQuestions <- function(questData, weightData, strataData){
