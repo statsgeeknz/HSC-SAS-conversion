@@ -308,4 +308,42 @@ To avoid subsequent issues, the cluster nodes are freed up here, as well as garb
     } # end if
   
 ```   
-     
+
+# Comparison of outputs
+
+There are currently some discrepencies in outputs between SAS and R, noting the target agreement is 4 decimal places. The full table of SAS, R and comparisons are found in the file `OutputComparison.csv`. In summary:
+
+* Frequencies, percentages and associated confidence intervals are in exact agreement. 
+
+* The weighted frequencies exceed this in several places. However, the SAS code as provided rounds to 2 decimal places, so appear effectively consistent. Also, given the figures are in the 10s to 100s of thousands, quite negligible.
+
+* The associated standard errors frequently differ by 1 decimal place. It is unclear currently why this is, however as above the figures are 100s to 1000s, so practically negligible.
+
+* The design effects differ at the second decimal place, and in a consistent direction (R is about 0.05 higher). This currently exceeds the target agreement and may be of concern. The underlying SAS calculations cannot be examined directly - documentation for SAS and R indicate the same/similar approach is employed (Taylor series estimator).
+
+
+```{r, eval=TRUE}
+  
+  ROutput <- read_csv("../R conversion/results/onewayR.csv")
+  SASOutput <- read_csv("../docs/oneway.csv")
+  
+  names(SASOutput) <- paste("SAS", names(SASOutput), sep = "_")
+  
+  CompTable <- ROutput %>% bind_cols(SASOutput) %>% mutate(Freq_Diff = Freq - SAS_Frequency,
+                                  WeightFreq_Diff = WeightFreq - SAS_WgtFreq,
+                                  WeightFreq_se_Diff = WeightFreq_se - SAS_StdDev,
+                                  Percent_Diff = pct - SAS_Percent, 
+                                  Percent_lower_Diff = pct_low - SAS_LowerCL, 
+                                  Percent_upper_diff = pct_upp - SAS_UpperCL, 
+                                  DesignEffect_Diff = DesignEffect - SAS_DesignEffect) %>%
+    mutate(across(.cols = Freq_Diff:DesignEffect_Diff, .fns = ~round(.x, 4))) 
+  
+    write_csv(CompTable, "OutputComparison.csv")
+    
+    printTable <- CompTable %>% select(Question, Freq_Diff:DesignEffect_Diff)
+
+    knitr::kable(printTable)
+
+```
+
+
