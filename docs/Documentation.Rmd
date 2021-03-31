@@ -1,0 +1,311 @@
+---
+title: "HSC SAS-to-R conversion"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+# Overview
+This document provides a very brief description of the R version of the SAS program `National Summary.sas`.
+
+# Preamble
+
+The program uses four main (groups of) packages, as well as one call to `plyr::ldply`. The packages `pbapply` and `parallel` are not essential, providing nicer progress indicators and an increase in speed through parallelisation. It has been tested against specific legacy versions as indicated in the `readme`.
+
+The presentation of datasets to the program was not specified. For testing purposes CSV files were provided, which are stored here in a data folder relative to the program. The SAS version calls datasets already within a SAS library. NB the SAS code indicates that the dataset names will depend on variable `Year` and further variables relating to the contents - specifically the first/last questions (referenced by the dataset variable `iref`) and a string `Geography` - here set to "NAT", as per the example.
+
+
+```{r}
+# Preamble --------------------------------------------------------------------------------------------------------------------------------------
+
+  library(tidyverse)
+  library(srvyr)
+  library(pbapply)
+  library(parallel)
+  
+  # if running from different direction to functions e.g. using the R project
+  setwd("R conversion/")
+  
+  source("tools.R")
+
+  #= only plays a role in the names of files - redundant in the SAS example
+  Year <- 1920
+
+  #= paths - going to assume named in a consistent way, only need path and year - expect only " - Dummy data" be removed in practice
+  dataPath <- "data/"
+  outputPath <- "results/"
+  
+  questionPath <- paste0(dataPath, "HACE", Year, "_QUESTIONS.csv")
+  strataPath <- paste0(dataPath, "HACE", Year, "_STRATA_DATA - Dummy data.csv")
+  weightPath <- paste0(dataPath, "HACE", Year, "_WEIGHTED - Dummy data.csv")
+  
+  #= read in example datasets - data management in reality TBD
+  HACE_Questions <- read_csv(questionPath)
+  HACE_Strata <- read_csv(strataPath)
+  HACE_Weighted <- read_csv(weightPath)
+
+  #= range of questions to ingest (indexed by variable iref)
+  first_question <- 101
+  last_question <- 153
+
+  #= gives a suffix for a variable called from the data
+  geography <- "NAT"
+```
+
+## `srvyr` options
+
+A change to the options of the underlying R survey package is required - PSU with only one observation are excluded. This appears to be the default SAS behaviour.
+
+```{r}
+
+  # SAS Note regarding 1 obs in PSU "Single-observation strata are not included in the variance estimates". Also passed to parallel nodes.
+  options(survey.lonely.psu="remove")
+```
+
+## Parallelisation
+
+The code broadly follows the SAS structure, and is relatively slow. It is however easily amenable to parallelisation, so the problem is broken to lists - using multiple cores makes this much faster. Here the default is to be parallel and use n-1 of the available cores. This can be skipeed with `makeParallel = F`.
+
+```{r}
+
+  # Calculate the number of cores - optional parallelisation via makeParallel = T/F
+  makeParallel <- T
+  noCores <- detectCores() - 1
+  myCl <- NULL # populated later if makeParallel = T
+```
+
+# Initial data preparation
+
+As per the SAS code, a strata dataset is prepared from the HACE dataset. A weighting variable is prepared, with a flag "No-Weight" for later use. The SAS code loops over questions, which are presented as a list here via `split`.
+
+```{r}
+# Pre-macro data manipulation -------------------------------------------------------------------------------------------------------------------
+
+
+  # HSC comment: "Set up strata populations"
+  Strata_Pop <- HACE_Strata %>% rename(total = n_eligible) %>% select(strata, total) %>% arrange(strata) %>% rename(Strata = strata)
+
+
+  # equivalent of work.HACE&Year._QUESTIONS
+  workingQuestions <- HACE_Questions %>% filter(between(iref, first_question, last_question)) %>% 
+             mutate(geography = geography, Weight2 = ifelse(Weight == "No_Weight", "No_Weight", paste0(Weight, geography)))
+
+# Macro conversion to function ------------------------------------------------------------------------------------------------------------------
+
+  # Create a list of questions to loop over - refer pbapply later
+  
+ questionList <- workingQuestions %>% split(., .$Question)
+
+```
+
+# Parallelisation  
+
+If making parallel, each cluster node requires the data and libraries be loaded. Also requires all package options and additional functions. 
+
+```{r}
+
+# Prepare parallelisation -----------------------------------------------------------------------------------------------------------------------
+
+  if(makeParallel){
+    
+    # Initiate cluster
+    myCl <- makeCluster(noCores)
+    
+    # Load necessary bits to the cluster nodes
+    
+    clusterEvalQ(myCl, {library(tidyverse); library(srvyr);  source("tools.r"); options(survey.lonely.psu="remove")})
+    
+    clusterExport(myCl, c("Strata_Pop", "processQuestions", "HACE_Weighted", "questionList"))
+    
+    }
+
+```
+
+# Applying over question list
+
+To emulate the SAS loop, here `lapply` is used. The variant `pblapply` is used, which offers both a progress indicator and built-in parallelisation.
+
+
+```{r}
+
+# Extract data from "Weighted" dataset as indicated by rows of "Question" data ------------------------------------------------------------------
+
+  # srvyr functions are a bottle-neck - parallelising to mitigate
+  
+  questionTables <- pbapply::pblapply(questionList, processQuestions, weightData = HACE_Weighted, strataData = Strata_Pop, cl = myCl)
+
+```
+
+
+# Main calculation
+
+The bulk of the SAS code is within an argument-free macro. This is largely replicated here within the function `processQuestions` within the sourced `tools.r`. There are three question types codes for in the SAS program: "Percent positive", "Information" and "Indicator". Only the first two are relevant (_pers. comm._ E. Smith), and require different treatments and outputs. 
+
+
+## Inputs and data preparation
+
+There is an initial data preparation regardless of question type. Here there is some renaming, removal of any questions with responses of 995, 999, or value = `Exclude` variable. Only non-zero weights are retained. `Question` is made character, as used in a `grepl` string match later.
+
+```{r}
+
+  processQuestions <- function(questData, weightData, strataData){
+    
+    # For debugging purposes
+    print(paste0("iref: ", questData$iref, " - Question:", questData$Question))
+    
+    #= select & rename from weighted dataset, drop exclusions and zero weights
+    
+    workingWeights <- weightData %>% 
+      select(GP_PRAC_NO, n_eligible, questData$Question, questData$Weight2) %>%
+      mutate(Exclude = questData$Exclude) %>%
+      rename(Strata = GP_PRAC_NO, Question = questData$Question, Weight = questData$Weight2) %>%
+      mutate(Question = as.character(Question)) %>%
+      filter(Question != 995, Question != 999, Weight != 0) %>%
+      filter(!(is.na(Exclude)==F & Exclude == Question))
+    
+```
+
+## Preparation for _"Percent positive"_ type questions
+
+For these types of questions, the question scores need conversion to positive/neutral/negative and positive/negative. The structure of the data and SAS program do this by matching to the contents of `Positive`, `Neutral` and `Negative` variables. This is replicated here by string matching, but is relatively slow. Restructuring to comparisons of numeric values would be several times faster. The strata data set is further joined by strata.
+
+```{r}
+
+
+# Separate path for "Percent positive" questions ------------------------------------------------------------------------------------------------
+
+    if(questData$QuestionType == "Percent positive") {
+      
+      #= Code whether positive (1/2), or pos/neut/neg (1/2/3) depending on definition - note case_when is very slow, so nested ifelse   
+      
+      workingWeights <- workingWeights %>% rowwise() %>%  
+        mutate(Positive = questData$Positive, 
+               Neutral = questData$Neutral,
+               Negative = questData$Negative,
+          PercentPositive = ifelse(grepl(Question, Positive), '% Positive', '% Not Positive'),
+          PosNeutNeg = ifelse(grepl(Question, Positive), '% Positive', ""), 
+          PosNeutNeg = ifelse(grepl(Question, Neutral), '% Neutral', PosNeutNeg), 
+          PosNeutNeg = ifelse(grepl(Question, Negative), '% Negative', PosNeutNeg)
+        )
+      
+      #= Generate the equivalent of the SAS one-way table, as defined:
+      
+      workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
+```
+
+## `srvyr` calculations
+
+For this type of question, three tables are created in the SAS program, although only one is explicitly used for the outputs - most being only printed to screen in SAS as HTML. The bulk of the computational burden is here - removal of any one of these tables would make the process markedly faster.
+
+```{r}
+      workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
+      
+      #= create the required summary tables
+      
+      questTable <- workingSurvey %>% group_by(Question) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      percentPosTable <- workingSurvey %>% group_by(PercentPositive) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      posNeutNegTable <- workingSurvey %>% group_by(PosNeutNeg) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      return(list(questionType = questData$QuestionType, questTable =questTable, percentPosTable = percentPosTable, posNeutNegTable = posNeutNegTable))
+    
+    } # end if
+
+```
+
+## _"Information"_ and other question types
+
+Only one table is created for this type of question, which is common to the "Percent positive" type of question.
+
+```{r}
+
+# Separate path for "Information" type questions ------------------------------------------------------------------------------------------------
+
+    if(questData$QuestionType == "Information") {
+   
+      #= Generate the equivalent of the SAS one-way table, as defined:
+      
+      workingSurvey <- workingWeights %>% inner_join(strataData, by = "Strata")
+      
+      workingSurvey <- as_survey(workingSurvey, strata = Strata, weight = Weight, fpc = total) 
+      
+      #= create the required summary tables
+      
+      questTable <- workingSurvey %>% group_by(Question) %>% 
+        summarise(Freq = n(), WeightFreq = survey_total(), pct = survey_prop(vartype = c("se", "ci"), deff = T)) %>%
+        rename(DesignEffect = pct_deff) %>% mutate(across(.cols = contains("pct"), .fns = ~.x*100))
+      
+      return(list(questionType = questData$QuestionType, questTable = questTable))
+```
+
+NB - the SAS program codes for an additional question type. This is not expected to appear in future, but a catch is provided here for other types, returning NULL.
+
+
+```{r}
+    } else {
+      
+      # in case other type of question enters
+      cat("Unknown question type \n")
+      
+      return(NULL)
+      
+      }
+    
+  } # end processQuestion function
+  
+
+```
+
+# Completion
+
+Processing of the output list object and closing out the cluster.
+
+## Output files
+
+Only one output file is explicitly created in the SAS program: `oneway.sas7bdat`. This is replicated here and outputted as a CSV. All other outputs presented as HTML in SAS are captured here also, but not outputted as an external file.
+
+```{r}
+
+# Tidy up ---------------------------------------------------------------------------------------------------------------------------------------
+  
+  # = aggregate lists into flat files
+  
+  onewayList <- lapply(questionTables, function(q){if(q$questionType == "Percent positive"){
+      q$percentPosTable %>% filter(PercentPositive == "% Positive")
+      } else {NULL}
+    })
+  
+  onewayTable <- plyr::ldply(onewayList) %>% rename(Question = .id)
+  
+  # = write out results
+  
+  write_csv(x = onewayTable, path = paste0(outputPath, "onewayR.csv"))
+  
+  # = close out the cluster nodes if needed
+
+```
+
+## Ending parallisation
+
+To avoid subsequent issues, the cluster nodes are freed up here, as well as garbage collection - this ought to be automatic, but seems beneficial when observing resource use.
+
+```{r}
+
+  if(makeParallel){
+    
+    stopCluster(myCl)
+    gc()
+  
+    } # end if
+  
+```   
+     
