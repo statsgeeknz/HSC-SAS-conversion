@@ -41,3 +41,4 @@ SAS code/SASData/hace1920_questions.sas7bdat
 SAS code/SASData/hace1920_strata_data.sas7bdat
 SAS code/SASData/hace1920_weighted.sas7bdat
 *.csv
+R conversion/results/onewayR_comp.xlsx
